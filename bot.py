@@ -75,11 +75,11 @@ async def generate_reply(user_text):
         if response and hasattr(response, "text") and response.text:
             return response.text.strip()
 
-        return "Hmm… say that again 😏"
+        return None
 
     except Exception as e:
         print("🔥 Gemini ERROR:", e)
-        return "You’re making me blush now 😳"
+        return None
 
 # =========================
 # MESSAGE HANDLER
@@ -109,7 +109,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     reply = await generate_reply(message.text)
-    await message.reply_text(reply)
+
+    if reply:
+        await message.reply_text(reply)
 
 # =========================
 # MAIN
@@ -120,7 +122,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("🚀 Laila is running 💕")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     threading.Thread(target=run_web).start()
