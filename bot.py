@@ -1,5 +1,4 @@
 import time
-import asyncio
 import os
 import threading
 
@@ -14,11 +13,15 @@ import google.generativeai as genai
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+if not TELEGRAM_TOKEN or not GEMINI_API_KEY:
+    print("❌ Missing TELEGRAM_TOKEN or GEMINI_API_KEY")
+    exit()
+
 # =========================
 # GEMINI SETUP
 # =========================
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # =========================
 # FLASK (KEEP ALIVE)
@@ -60,14 +63,22 @@ def is_active(chat_id):
 def activate(chat_id):
     active_chats[chat_id] = time.time() + ACTIVE_DURATION
 
+# =========================
+# GEMINI RESPONSE
+# =========================
 async def generate_reply(user_text):
     try:
-        response = model.generate_content(
-            SYSTEM_PROMPT + "\nUser: " + user_text
-        )
-        return response.text if response.text else "Say that again, baby 😏"
+        response = model.generate_content([
+            {"role": "user", "parts": [SYSTEM_PROMPT + "\nUser: " + user_text]}
+        ])
+
+        if response and hasattr(response, "text") and response.text:
+            return response.text.strip()
+
+        return "Hmm… say that again 😏"
+
     except Exception as e:
-        print("Gemini ERROR:", e)   # 👈 ADD THIS
+        print("🔥 Gemini ERROR:", e)
         return "You’re making me blush now 😳"
 
 # =========================
@@ -75,11 +86,13 @@ async def generate_reply(user_text):
 # =========================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-    chat_id = message.chat_id
 
-    if not message.text:
+    if not message or not message.text:
         return
 
+    print("📩 Received:", message.text)
+
+    chat_id = message.chat.id
     text = message.text.lower()
 
     # Trigger: name "laila"
@@ -106,7 +119,7 @@ def main():
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Laila is running 💕")
+    print("🚀 Laila is running 💕")
     app.run_polling()
 
 if __name__ == "__main__":
