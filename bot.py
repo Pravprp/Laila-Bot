@@ -65,7 +65,7 @@ async def generate_reply(user_text):
         response = model.generate_content(
             SYSTEM_PROMPT + "\nUser: " + user_text
         )
-        return response.text.strip()
+        return response.text if response.text else "Say that again, baby 😏"
     except Exception as e:
         print("Gemini ERROR:", e)   # 👈 ADD THIS
         return "You’re making me blush now 😳"
