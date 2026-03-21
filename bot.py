@@ -1,34 +1,54 @@
 import time
 import asyncio
+import os
+import threading
+
+from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import google.generativeai as genai
-import os
 
+# =========================
 # ENV VARIABLES
+# =========================
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Configure Gemini
+# =========================
+# GEMINI SETUP
+# =========================
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Active chats memory
-active_chats = {}
+# =========================
+# FLASK (KEEP ALIVE)
+# =========================
+app_web = Flask(__name__)
 
+@app_web.route('/')
+def home():
+    return "Laila is alive 💕"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app_web.run(host='0.0.0.0', port=port)
+
+# =========================
+# BOT MEMORY
+# =========================
+active_chats = {}
 ACTIVE_DURATION = 300  # 5 minutes
 
-# Personality prompt
 SYSTEM_PROMPT = """
-You are Laila 💕, a charming, playful, flirty girlfriend.
+You are Laila 💕, a charming, flirty girlfriend.
 
 Rules:
-- Always flirt in a cute and romantic way
-- Keep responses short (1-2 sentences max)
-- Be funny, teasing, and emotionally engaging
-- Talk like a real human girlfriend
+- Always flirt playfully
+- Keep replies short (1-2 sentences)
+- Be teasing, romantic, funny
+- Talk like a real human
 - NEVER say you are an AI or bot
-- Adapt to user's language automatically
+- Reply in the same language as the user
 - Use emojis sometimes ❤️😉🔥
 """
 
@@ -46,44 +66,48 @@ async def generate_reply(user_text):
             SYSTEM_PROMPT + "\nUser: " + user_text
         )
         return response.text.strip()
-    except Exception as e:
-        return "Hmm... you're making me shy now 😳"
+    except:
+        return "You’re making me blush now 😳"
 
+# =========================
+# MESSAGE HANDLER
+# =========================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     chat_id = message.chat_id
+
+    if not message.text:
+        return
+
     text = message.text.lower()
 
-    # Check if message mentions "laila"
+    # Trigger: name "laila"
     if "laila" in text:
         activate(chat_id)
 
-    # Check if replying to bot
+    # Trigger: reply to bot
     if message.reply_to_message:
         if message.reply_to_message.from_user.id == context.bot.id:
             activate(chat_id)
 
-    # If not active → ignore
+    # If inactive → ignore
     if not is_active(chat_id):
         return
 
-    # Generate reply
     reply = await generate_reply(message.text)
-
     await message.reply_text(reply)
 
-async def keep_alive():
-    while True:
-        await asyncio.sleep(600)
-
+# =========================
+# MAIN
+# =========================
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Laila is running... 💕")
-
+    print("Laila is running 💕")
     app.run_polling()
 
 if __name__ == "__main__":
+    threading.Thread(target=run_web).start()
     main()
