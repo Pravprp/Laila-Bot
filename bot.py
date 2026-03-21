@@ -96,7 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = message.text.lower()
 
     # Trigger: name "laila"
-    if "laila" in text:
+    if "lyla" in text:
         activate(chat_id)
 
     # Trigger: reply to bot
