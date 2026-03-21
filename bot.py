@@ -66,7 +66,8 @@ async def generate_reply(user_text):
             SYSTEM_PROMPT + "\nUser: " + user_text
         )
         return response.text.strip()
-    except:
+    except Exception as e:
+        print("Gemini ERROR:", e)   # 👈 ADD THIS
         return "You’re making me blush now 😳"
 
 # =========================
