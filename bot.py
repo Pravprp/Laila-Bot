@@ -21,7 +21,7 @@ if not TELEGRAM_TOKEN or not GEMINI_API_KEY:
 # GEMINI SETUP
 # =========================
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.5-flash")
+model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
 # =========================
 # FLASK (KEEP ALIVE)
