@@ -125,5 +125,5 @@ def main():
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    threading.Thread(target=main).start()
-    run_web()
+    threading.Thread(target=run_web).start()
+    main()
